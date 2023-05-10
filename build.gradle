@@ -1,0 +1,202 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.bundling.Jar
+
+plugins {
+	id 'java'
+	id 'maven-publish'
+	id 'idea'
+}
+
+idea {
+	module {
+		outputDir file("$buildDir/classes/main")
+		testOutputDir file("$buildDir/classes/test")
+	}
+}
+
+subprojects {
+	afterEvaluate {
+		java.sourceCompatibility = JavaVersion.VERSION_11
+		tasks.withType(JavaCompile) {
+			options.encoding = 'UTF-8'
+		}
+
+		javadoc {
+			// general javadoc options
+			configure {
+				options.author true
+				options.use true
+				options.version true
+				options.showFromProtected()
+				options.addStringOption("charset", "UTF-8")
+				options.addBooleanOption("notimestamp", false)
+				options.addBooleanOption("-allow-script-in-comments", true)
+				options.addBooleanOption('Xdoclint:none', true)
+				options.addBooleanOption("breakiterator", true)
+				options.addStringOption("-source ${version}")
+			}
+		}
+
+		repositories {
+			mavenLocal()
+			mavenCentral()
+
+			maven {
+				name = 'ZK Repository'
+				url = uri('https://mavensync.zkoss.org/maven2')
+			}
+
+			maven {
+				name = 'ZK Evaluation Repository'
+				url = uri('https://mavensync.zkoss.org/eval')
+			}
+		}
+
+		publishing {
+			publications {
+				"$project.name"(MavenPublication) {
+					groupId = "${group}"
+					artifactId = project.name
+					// pom configuration
+					pom {
+						name = project.description
+						url = "https://www.zkoss.org/$project.name"
+						description = project.description
+						licenses {
+							license {
+								name = 'GNU LESSER GENERAL PUBLIC LICENSE, Version 3'
+								url = 'https://www.gnu.org/licenses/lgpl.html'
+								distribution = 'repo'
+							}
+						}
+						developers {
+							developer {
+								id = 'zkteam'
+								name = 'ZK Team'
+								email = 'info@zkoss.org'
+								url = 'https://www.zkoss.org'
+								organization = 'Potix'
+								organizationUrl = 'https://www.zkoss.org'
+								roles = ['architect', 'developer']
+								timezone = '8'
+								properties = [
+										picUrl: 'https://www.zkoss.org'
+								]
+							}
+						}
+						scm {
+							connection = 'scm:git:https://github.com/zkoss/zkdiffer.git'
+							url = 'https://mavensync.zkoss.org/maven2'
+						}
+						withXml {
+							// add repositories in generated pom
+							def repositoriesNode = asNode().appendNode('repositories')
+							project.repositories.each { repository ->
+								if (repository instanceof MavenArtifactRepository && repository.name != 'MavenRepo' && repository.name != 'MavenLocal') {
+									def repositoryNode = repositoriesNode.appendNode('repository')
+									repositoryNode.appendNode('id', repository.name)
+									repositoryNode.appendNode('url', repository.url)
+								}
+							}
+						}
+					}
+					// add dependencies to pom
+					from(components.java)
+					suppressAllPomMetadataWarnings()
+				}
+			}
+		}
+
+		// move & rename default-pom.xml
+		task preparePomFile(type: Copy) {
+			dependsOn(rootProject.tasks.withType(GenerateMavenPom))
+			into file("$projectDir/build/pom")
+			from file("$rootDir/build/publications/$project.name")
+			include '**/pom-default.xml'
+			rename 'pom-default.xml', 'pom.xml'
+			setDuplicatesStrategy(DuplicatesStrategy.INCLUDE)
+		}
+
+		jar {
+			manifest {
+				attributes(
+						"Build-Jdk-Spec": JavaVersion.current(),
+						"Created-By": 'Gradle ' + project.getGradle().getGradleVersion()
+				)
+			}
+		}
+
+		// build sources jar for bundle
+		task sourcesJar(type: Jar) {
+			archiveClassifier = 'sources'
+
+			// add generated java in to source
+			from "$buildDir/generated/sources/main"
+
+			includeEmptyDirs false
+			from 'src/main/java'
+			setDuplicatesStrategy(DuplicatesStrategy.INCLUDE)
+		}
+
+		// build sources jar for bundle
+		task javadocJar(type: Jar) {
+			dependsOn 'javadoc'
+			archiveClassifier = 'javadoc'
+
+			includeEmptyDirs false
+			from "$buildDir/docs/javadoc"
+			setDuplicatesStrategy(DuplicatesStrategy.INCLUDE)
+		}
+
+		// combine jar & pom.xml into one bundle.jar for release theme
+		task bundleJar(type: Jar) {
+			dependsOn 'jar'
+			dependsOn 'sourcesJar'
+			dependsOn 'javadocJar'
+			dependsOn 'preparePomFile'
+			archiveClassifier = "bundle"
+			def elementName = "${project.name}-${project.version}"
+			from "$buildDir/pom"
+			from("$buildDir/libs") {
+				include "**/${elementName}.jar"
+				include "**/${elementName}-sources.jar"
+				include "**/${elementName}-javadoc.jar"
+				setDuplicatesStrategy(DuplicatesStrategy.INCLUDE)
+			}
+		}
+
+		task release() {
+			dependsOn 'bundleJar'
+			doLast {
+				copy {
+					from "$buildDir/libs/${project.name}-${project.version}-bundle.jar"
+					into "$buildDir/dist/maven"
+				}
+			}
+		}
+	}
+}
+
+task release() {
+	dependsOn subprojects.collect { ":$it.name:release" }
+}
+
+// change all the version in gradle.properties under zkdiffer
+// e.g. ./gradlew upVer -PchangeVersionTo=10.0.1-SNAPSHOT
+task upVer() {
+	doLast {
+		if (project.hasProperty("changeVersionTo")) {
+			fileTree("$rootDir/").matching {
+				include "**/gradle.properties"
+			}.each { file ->
+				println "upVer: ${file.path} from ${project.version} to ${project.changeVersionTo}"
+				ant.replaceregexp(
+						file: file,
+						match: "version=$project.version",
+						replace: "version=$project.changeVersionTo",
+				)
+			}
+		}
+	}
+}

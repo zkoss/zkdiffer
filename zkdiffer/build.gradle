@@ -1,0 +1,48 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+}
+
+idea {
+    module {
+        outputDir file("$buildDir/classes/main")
+        testOutputDir file("$buildDir/classes/test")
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+sourceSets {
+    // add immutables code-gen for generating Javadoc
+    main {
+        compileClasspath += java.srcDir("$buildDir/generated/sources")
+    }
+}
+
+description = "ZK Differ"
+
+java {
+    // Declaring feature variants for optionalImplementation, to generate dependency optional in pom
+    registerFeature('optional') {
+        usingSourceSet(sourceSets.main)
+    }
+}
+
+dependencies {
+    optionalImplementation "org.zkoss.zk:zk:$zkVersion"
+
+    annotationProcessor "org.immutables:value:$immutablesVersion"
+    compileOnly "org.immutables:value:$immutablesVersion"
+
+    // Use JUnit Jupiter for testing.
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+}
+
+tasks.named('test') {
+    // Use JUnit Platform for unit tests.
+    useJUnitPlatform()
+}
