@@ -1,7 +1,3 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.bundling.Jar
-
 plugins {
 	id 'java'
 	id 'maven-publish'
@@ -110,12 +106,37 @@ subprojects {
 
 		// move & rename default-pom.xml
 		task preparePomFile(type: Copy) {
+
+			var oldVersion = project.version;
+			var newVersion = oldVersion;
+			if (project.hasProperty("FL")) {
+				var version = project.version.split("-")[0]
+				project.version = version + ".FL." + new Date().format('yyyyMMdd')
+				newVersion = project.version
+			}
+
 			dependsOn(rootProject.tasks.withType(GenerateMavenPom))
 			into file("$projectDir/build/pom")
 			from file("$rootDir/build/publications/$project.name")
 			include '**/pom-default.xml'
 			rename 'pom-default.xml', 'pom.xml'
+
 			setDuplicatesStrategy(DuplicatesStrategy.INCLUDE)
+
+			doLast {
+				if (project.hasProperty("FL")) {
+					println "Release pom with $newVersion"
+					fileTree("$projectDir/build/pom").matching {
+						include "pom.xml"
+					}.each { file ->
+						ant.replaceregexp(
+								file: file,
+								match: "<version>$oldVersion</version>",
+								replace: "<version>$newVersion</version>",
+						)
+					}
+				}
+			}
 		}
 
 		jar {
@@ -177,7 +198,8 @@ subprojects {
 		}
 	}
 }
-
+// for FL
+// ./gradlew release -PFL=true
 task release() {
 	dependsOn subprojects.collect { ":$it.name:release" }
 }
