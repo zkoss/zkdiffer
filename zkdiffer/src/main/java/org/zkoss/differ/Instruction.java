@@ -18,7 +18,8 @@ import javax.annotation.Nullable;
 import org.immutables.value.Value;
 
 /**
- * The instrcution of diffing
+ * The instruction of diffing
+ *
  * @author jumperchen
  */
 @Value.Immutable
@@ -29,13 +30,13 @@ public interface Instruction {
 	 * The action of an instruction.
 	 */
 	public enum Action {
-			addAttribute,
-			modifyAttribute,
-			removeAttribute,
-			relocateGroup,
-			removeElement,
-			addElement,
-			replaceElement,
+		addAttribute, modifyAttribute, removeAttribute,
+		addProperty, modifyProperty, removeProperty,
+		addWidgetOverride, modifyWidgetOverride, removeWidgetOverride,
+		addClientAttribute, modifyClientAttribute, removeClientAttribute,
+		addWidgetAttribute, modifyWidgetAttribute, removeWidgetAttribute,
+		addWidgetListener, modifyWidgetListener, removeWidgetListener,
+		relocateGroup, removeElement, addElement, replaceElement,
 	}
 
 	/**
@@ -56,6 +57,7 @@ public interface Instruction {
 
 	/**
 	 * Returns the new value, if any.
+	 *
 	 * @return
 	 */
 	@Nullable
@@ -99,6 +101,7 @@ public interface Instruction {
 
 	/**
 	 * Constructs an instruction builder with the given action.
+	 *
 	 * @param action
 	 * @return
 	 */
@@ -106,5 +109,6 @@ public interface Instruction {
 		return new Builder().setAction(action);
 	}
 
-	class Builder extends ImmutableInstruction.Builder {}
+	class Builder extends ImmutableInstruction.Builder {
+	}
 }

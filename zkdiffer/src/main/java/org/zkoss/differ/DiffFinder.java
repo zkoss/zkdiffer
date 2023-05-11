@@ -13,6 +13,7 @@ package org.zkoss.differ;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -522,33 +523,85 @@ import org.zkoss.zk.ui.Component;
 					.setRoute(route).build());
 		}
 
-		Map<String, Object> prop1 = source.getProperties();
-		Map<String, Object> prop2 = new HashMap<>(
-				target.getProperties()); // clone it
+		// check properties.
+		diffMap(diffs, route, target, source.getProperties(), target.getProperties(),
+				Instruction.Action.addProperty,
+				Instruction.Action.removeProperty,
+				Instruction.Action.modifyProperty);
 
-		for (Map.Entry<String, Object> me1 : prop1.entrySet()) {
-			if (!prop2.containsKey(me1.getKey())) {
-				diffs.add(Instruction.newBuilder(Instruction.Action.removeAttribute)
-						.setRoute(route).setName(me1.getKey())
-						.setValue(me1.getValue()).build());
+		// check widget overrides.
+		diffMap(diffs, route, null, source.getWidgetOverrides(), target.getWidgetOverrides(),
+				Instruction.Action.addWidgetOverride,
+				Instruction.Action.removeWidgetOverride,
+				Instruction.Action.modifyWidgetOverride);
+
+		// check widget attributes.
+		diffMap(diffs, route, null, source.getWidgetAttributes(), target.getWidgetAttributes(),
+				Instruction.Action.addWidgetAttribute,
+				Instruction.Action.removeWidgetAttribute,
+				Instruction.Action.modifyWidgetAttribute);
+
+		// check widget listeners.
+		diffMap(diffs, route, null, source.getWidgetListeners(), target.getWidgetListeners(),
+				Instruction.Action.addWidgetListener,
+				Instruction.Action.removeWidgetListener,
+				Instruction.Action.modifyWidgetListener);
+
+		// check widget listeners.
+		diffMap(diffs, route, null, source.getClientAttributes(), target.getClientAttributes(),
+				Instruction.Action.addClientAttribute,
+				Instruction.Action.removeClientAttribute,
+				Instruction.Action.modifyClientAttribute);
+
+
+		// check component attributes.
+		diffMap(diffs, route, null, source.getAttributes(), target.getAttributes(),
+				Instruction.Action.addAttribute,
+				Instruction.Action.removeAttribute,
+				Instruction.Action.modifyAttribute);
+		return diffs;
+	}
+
+	private static void diffMap(List<Instruction> diffs, List<Integer> route, ComponentFeature targetElement,
+			Map<String, ?> source, Map<String, ?> target,
+			Instruction.Action addAction, Instruction.Action removeAction,
+			Instruction.Action modifyAction) {
+
+		if (source == target) return;
+		if (source == null) {
+			source = Collections.emptyMap();
+		}
+		if (target == null) {
+			target = Collections.emptyMap();
+		}
+		if (target.isEmpty() && source.isEmpty()) return;
+
+		Map<String, ?> cloneTarget = new HashMap<>(target); // clone it
+
+		for (Map.Entry<String, ?> me1 : source.entrySet()) {
+			if (!cloneTarget.containsKey(me1.getKey())) {
+				diffs.add(Instruction.newBuilder(removeAction).setRoute(route)
+						.setName(me1.getKey()).setValue(me1.getValue()).setElement(targetElement)
+						.build());
 			} else {
-				Object m2Value = prop2.remove(me1.getKey());
+				Object m2Value = cloneTarget.remove(me1.getKey());
 				if (!Objects.equals(me1.getValue(), m2Value)) {
-					diffs.add(Instruction.newBuilder(Instruction.Action.modifyAttribute)
-							.setRoute(route).setName(me1.getKey())
-							.setOldValue(me1.getValue()).setNewValue(m2Value)
-							.build());
+					diffs.add(
+							Instruction.newBuilder(modifyAction).setRoute(route)
+									.setName(me1.getKey())
+									.setOldValue(me1.getValue())
+									.setNewValue(m2Value)
+									.setElement(targetElement).build());
 				}
 			}
 		}
 
-		for (Map.Entry<String, Object> me2 : prop2.entrySet()) {
-			// add property
-			diffs.add(Instruction.newBuilder(Instruction.Action.addAttribute).setRoute(route)
-					.setName(me2.getKey()).setValue(me2.getValue()).build());
+		for (Map.Entry<String, ?> me2 : cloneTarget.entrySet()) {
+			// add OP
+			diffs.add(Instruction.newBuilder(addAction).setRoute(route)
+					.setName(me2.getKey()).setValue(me2.getValue())
+					.setElement(targetElement).build());
 		}
-
-		return diffs;
 	}
 
 	private boolean isEqual(ComponentFeature c1, ComponentFeature c2) {

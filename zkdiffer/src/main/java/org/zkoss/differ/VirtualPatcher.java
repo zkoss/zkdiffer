@@ -68,43 +68,67 @@ import java.util.stream.Collectors;
 		}
 		List<DiffFinder.SubtreeInfo> newSubsets = new ArrayList<>();
 
-
-	ComponentFeature newNode;
-	List<ComponentFeature> nodeArray;
-	List<Integer> route;
+		ComponentFeature newNode;
+		List<ComponentFeature> nodeArray;
+		List<Integer> route;
 
 		switch (diff.getAction()) {
 		case addAttribute:
-
-			assert node != null;
-			node.setProperty(diff.getName(), diff.getValue());
+			node.setAttribute(diff.getName(), diff.getValue());
 			break;
 		case modifyAttribute:
-			assert node != null;
-			node.setProperty(diff.getName(), diff.getNewValue());
+			node.setAttribute(diff.getName(), diff.getNewValue());
 			break;
 		case removeAttribute:
-			assert node != null;
+			node.removeAttribute(diff.getName());
+			break;
+		case addProperty:
+			node.setProperty(diff.getName(), diff.getValue());
+			break;
+		case modifyProperty:
+			node.setProperty(diff.getName(), diff.getNewValue());
+			break;
+		case removeProperty:
 			node.removeProperty(diff.getName());
 			break;
-//		case Instruction.Type.modifyTextElement:
-//			node.data = diff.getNewValue()
-//			if (parentNode.nodeName === "TEXTAREA") {
-//				parentNode.value = diff.getNewValue()
-//			}
-//			break
-//		case Instruction.Type.modifyValue:
-//			node.value = diff.getNewValue()
-//			break
-//		case Instruction.Type.modifyComment:
-//			node.data = diff.getNewValue()
-//			break
-//		case Instruction.Type.modifyChecked:
-//			node.checked = diff.getNewValue()
-//			break
-//		case Instruction.Type.modifySelected:
-//			node.selected = diff.getNewValue()
-//			break
+		case addWidgetOverride:
+			node.setWidgetOverride(diff.getName(), (String) diff.getValue());
+			break;
+		case modifyWidgetOverride:
+			node.setWidgetOverride(diff.getName(), (String) diff.getNewValue());
+			break;
+		case removeWidgetOverride:
+			node.removeWidgetOverride(diff.getName());
+			break;
+		case addWidgetListener:
+			node.setWidgetListener(diff.getName(), (String) diff.getValue());
+			break;
+		case modifyWidgetListener:
+			node.setWidgetListener(diff.getName(), (String) diff.getNewValue());
+			break;
+		case removeWidgetListener:
+			node.removeWidgetListener(diff.getName());
+			break;
+		case addWidgetAttribute:
+			node.setWidgetAttribute(diff.getName(), (String) diff.getValue());
+			break;
+		case modifyWidgetAttribute:
+			node.setWidgetAttribute(diff.getName(),
+					(String) diff.getNewValue());
+			break;
+		case removeWidgetAttribute:
+			node.removeWidgetAttribute(diff.getName());
+			break;
+		case addClientAttribute:
+			node.setClientAttribute(diff.getName(), (String) diff.getValue());
+			break;
+		case modifyClientAttribute:
+			node.setClientAttribute(diff.getName(),
+					(String) diff.getNewValue());
+			break;
+		case removeClientAttribute:
+			node.removeClientAttribute(diff.getName());
+			break;
 		case replaceElement:
 			newNode = (ComponentFeature) diff.getNewValue();
 			assert parentNode != null;
@@ -120,27 +144,34 @@ import java.util.stream.Collectors;
 			for (ComponentFeature movedNode : nodeArray) {
 				node.addChild(to, movedNode);
 			}
-			List<DiffFinder.SubtreeInfo> subsets = subtreeInfos.get(node.getUuid());
+			List<DiffFinder.SubtreeInfo> subsets = subtreeInfos.get(
+					node.getUuid());
 			if (subsets != null) {
 				subsets.forEach(map -> {
-					if (from < to && map.oldIndex <= to && map.oldIndex > from) {
+					if (from < to && map.oldIndex <= to
+							&& map.oldIndex > from) {
 						map.oldIndex -= groupLength;
 						int splitLength = map.oldIndex + map.length - to;
 						if (splitLength > 0) {
 							// new insertion splits map.
-							newSubsets.add(new DiffFinder.SubtreeInfo(to + groupLength,
-									map.newIndex + map.length - splitLength,
-									splitLength));
+							newSubsets.add(
+									new DiffFinder.SubtreeInfo(to + groupLength,
+											map.newIndex + map.length
+													- splitLength,
+											splitLength));
 							map.length -= splitLength;
 						}
-					} else if (from > to && map.oldIndex > to && map.oldIndex < from) {
+					} else if (from > to && map.oldIndex > to
+							&& map.oldIndex < from) {
 						map.oldIndex += groupLength;
 						int splitLength = map.oldIndex + map.length - to;
 						if (splitLength > 0) {
 							// new insertion splits map.
-							newSubsets.add(new DiffFinder.SubtreeInfo(to + groupLength,
-									map.newIndex + map.length - splitLength,
-									splitLength));
+							newSubsets.add(
+									new DiffFinder.SubtreeInfo(to + groupLength,
+											map.newIndex + map.length
+													- splitLength,
+											splitLength));
 							map.length -= splitLength;
 						}
 					} else if (map.oldIndex == from) {
@@ -155,7 +186,8 @@ import java.util.stream.Collectors;
 			assert parentNode != null;
 			parentNode.removeChild(nodeIndexArray[0]);
 			if (subtreeInfos.containsKey(parentNode.getUuid())) {
-				List<DiffFinder.SubtreeInfo> parentSubsets = subtreeInfos.get(parentNode.getUuid());
+				List<DiffFinder.SubtreeInfo> parentSubsets = subtreeInfos.get(
+						parentNode.getUuid());
 				parentSubsets.forEach(map -> {
 					int nodeIndex = nodeIndexArray[0];
 					if (map.oldIndex > nodeIndex) {
@@ -167,10 +199,9 @@ import java.util.stream.Collectors;
 							map.length--;
 						} else {
 							newSubsets.add(new DiffFinder.SubtreeInfo(
-							map.newIndex + nodeIndex - map.oldIndex,
+									map.newIndex + nodeIndex - map.oldIndex,
 									nodeIndex,
-								map.length - nodeIndex + map.oldIndex - 1
-							));
+									map.length - nodeIndex + map.oldIndex - 1));
 							map.length = nodeIndex - map.oldIndex;
 						}
 					}
@@ -180,7 +211,7 @@ import java.util.stream.Collectors;
 			break;
 		case addElement: {
 			route = new ArrayList<>(diff.getRoute());
-            int c = route.remove(route.size() - 1);
+			int c = route.remove(route.size() - 1);
 			node = getFromVirtualRoute(source, route).node;
 			newNode = diff.getElement();
 
@@ -189,93 +220,23 @@ import java.util.stream.Collectors;
 			} else {
 				node.addChild(c, newNode);
 			}
-			List<DiffFinder.SubtreeInfo> subsets = subtreeInfos.get(node.getUuid());
+			List<DiffFinder.SubtreeInfo> subsets = subtreeInfos.get(
+					node.getUuid());
 			if (subsets != null) {
 				subsets.forEach(map -> {
 					if (map.oldIndex >= c) {
 						map.oldIndex += 1;
 					} else if (map.oldIndex + map.length > c) {
-                        int splitLength = map.oldIndex + map.length - c;
+						int splitLength = map.oldIndex + map.length - c;
 						newSubsets.add(new DiffFinder.SubtreeInfo(
-								map.newIndex + map.length - splitLength,
-								c + 1,
-								splitLength
-						));
+								map.newIndex + map.length - splitLength, c + 1,
+								splitLength));
 						map.length -= splitLength;
 					}
 				});
 			}
 			break;
 		}
-//		case Instruction.Type.removeTextElement:
-//			parentNode.childNodes.splice(nodeIndex, 1)
-//			if (parentNode.nodeName === "TEXTAREA") {
-//				delete parentNode.value
-//			}
-//			if (parentNode.subsets) {
-//				parentNode.subsets.forEach((map: subsetType) => {
-//					if (map.oldIndex > nodeIndex[0]) {
-//						map.oldIndex -= 1
-//					} else if (map.oldIndex === nodeIndex[0]) {
-//						map.delete = true
-//					} else if (
-//							map.oldIndex < nodeIndex &&
-//									map.oldIndex + map.length > nodeIndex
-//					) {
-//						if (map.oldIndex + map.length - 1 === nodeIndex[0]) {
-//							map.length--
-//						} else {
-//							newSubsets.push({
-//									newValue:
-//							map.newIndex + nodeIndex - map.oldIndex,
-//									oldValue: nodeIndex,
-//									length:
-//							map.length - nodeIndex + map.oldIndex - 1,
-//                            })
-//							map.length = nodeIndex - map.oldIndex
-//						}
-//					}
-//				})
-//			}
-//			node = parentNode
-//			break
-//		case Instruction.Type.addTextElement: {
-//			route = diff.getRoute().slice()
-//            const c: number = route.splice(route.length - 1, 1)[0]
-//			newNode = {}
-//			newNode.nodeName = "#text"
-//			newNode.data = diff.getValue()
-//			node = getFromVirtualRoute(tree, route).node
-//			if (!node.childNodes) {
-//				node.childNodes = []
-//			}
-//
-//			if (c >= node.childNodes.length) {
-//				node.childNodes.push(newNode)
-//			} else {
-//				node.childNodes.splice(c, 0, newNode)
-//			}
-//			if (node.nodeName === "TEXTAREA") {
-//				node.value = diff.getNewValue()
-//			}
-//			if (node.subsets) {
-//				node.subsets.forEach((map: subsetType) => {
-//					if (map.oldIndex >= c) {
-//						map.oldIndex += 1
-//					}
-//					if (map.oldIndex < c && map.oldIndex + map.length > c) {
-//                        const splitLength = map.oldIndex + map.length - c
-//						newSubsets.push({
-//								newValue: map.newIndex + map.length - splitLength,
-//								oldValue: c + 1,
-//								length: splitLength,
-//                        })
-//						map.length -= splitLength
-//					}
-//				})
-//			}
-//			break
-//		}
 		default:
 			throw new RuntimeException("unknown action [" + diff.getAction());
 		}

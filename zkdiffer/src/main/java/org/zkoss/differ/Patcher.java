@@ -64,15 +64,49 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 			if (node == null) {
 				return false;
 			}
-			setProperty(node, diff.getName(), diff.getValue());
+			node.setAttribute(diff.getName(), diff.getValue());
 			break;
 		case modifyAttribute:
 			if (node == null) {
 				return false;
 			}
-			setProperty(node, diff.getName(), diff.getNewValue());
+			node.setAttribute(diff.getName(), diff.getNewValue());
 			break;
 		case removeAttribute:
+			if (node == null) {
+				return false;
+			}
+			node.removeAttribute(diff.getName());
+			break;
+		case addProperty:
+			if (node == null) {
+				return false;
+			}
+			try {
+				setProperty(node, diff.getName(), diff.getValue());
+			} catch (Throwable t) {
+				// rollback with replace element
+				Component parent = node.getParent();
+				Component newChild = ((ComponentFeature) diff.getElement()).toComponent();
+				parent.insertBefore(newChild, node);
+				node.detach();
+			}
+			break;
+		case modifyProperty:
+			if (node == null) {
+				return false;
+			}
+			try {
+				setProperty(node, diff.getName(), diff.getNewValue());
+			} catch (Throwable t) {
+				// rollback with replace element
+				Component parent = node.getParent();
+				Component newChild = ((ComponentFeature) diff.getElement()).toComponent();
+				parent.insertBefore(newChild, node);
+				node.detach();
+			}
+			break;
+		case removeProperty:
 			if (node == null) {
 				return false;
 			}
@@ -81,53 +115,86 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 				setProperty(node, diff.getName(),
 						Fields.get(Classes.newInstance(node.getClass(), null),
 								diff.getName()));
-			} catch (Exception e) {
-				setProperty(node, diff.getName(), null);
+			} catch (Throwable t) {
+				// rollback with replace element
+				Component parent = node.getParent();
+				Component newChild = ((ComponentFeature) diff.getElement()).toComponent();
+				parent.insertBefore(newChild, node);
+				node.detach();
 			}
 			break;
-//		case Type.modifyTextElement:
-//			if (!node || !(node instanceof Text)) {
-//				return false
-//			}
-//			options.textDiff(
-//					node,
-//					node.data,
-//					diff.getValue(Type.oldValue) as string,
-//					diff.getNewValue() as string
-//			)
-//			if (node.parentNode instanceof HTMLTextAreaElement) {
-//				node.parentNode.value = diff.getNewValue() as string
-//			}
-//			break
-//		case Type.modifyValue:
-//			if (!node || typeof node.value === "undefined") {
-//			return false
-//		}
-//		node.value = diff.getNewValue()
-//		break
-//		case Type.modifyComment:
-//			if (!node || !(node instanceof Comment)) {
-//				return false
-//			}
-//			options.textDiff(
-//					node,
-//					node.data,
-//					diff.getValue(Type.oldValue) as string,
-//					diff.getNewValue() as string
-//			)
-//			break
-//		case Type.modifyChecked:
-//			if (!node || typeof node.checked === "undefined") {
-//			return false
-//		}
-//		node.checked = diff.getNewValue()
-//		break
-//		case Type.modifySelected:
-//			if (!node || typeof node.selected === "undefined") {
-//			return false
-//		}
-//		node.selected = diff.getNewValue()
-//		break
+		case addWidgetOverride:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetOverride(diff.getName(), (String) diff.getValue());
+			break;
+		case modifyWidgetOverride:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetOverride(diff.getName(), (String) diff.getNewValue());
+			break;
+		case removeWidgetOverride:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetOverride(diff.getName(), null);
+			break;
+		case addWidgetListener:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetListener(diff.getName(), (String) diff.getValue());
+			break;
+		case modifyWidgetListener:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetListener(diff.getName(), (String) diff.getNewValue());
+			break;
+		case removeWidgetListener:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetListener(diff.getName(), null);
+			break;
+		case addWidgetAttribute:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetAttribute(diff.getName(), (String) diff.getValue());
+			break;
+		case modifyWidgetAttribute:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetAttribute(diff.getName(), (String) diff.getNewValue());
+			break;
+		case removeWidgetAttribute:
+			if (node == null) {
+				return false;
+			}
+			node.setWidgetAttribute(diff.getName(), null);
+			break;
+		case addClientAttribute:
+			if (node == null) {
+				return false;
+			}
+			node.setClientAttribute(diff.getName(), (String) diff.getValue());
+			break;
+		case modifyClientAttribute:
+			if (node == null) {
+				return false;
+			}
+			node.setClientAttribute(diff.getName(), (String) diff.getNewValue());
+			break;
+		case removeClientAttribute:
+			if (node == null) {
+				return false;
+			}
+			node.setClientAttribute(diff.getName(), null);
+			break;
 		case replaceElement: {
 			Component parent = node.getParent();
 			Component newChild = ((ComponentFeature) diff.getNewValue()).toComponent();
@@ -168,33 +235,6 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 					children.size() > c ? children.get(c) : null);
 			break;
 		}
-//		case Type.removeTextElement: {
-//			if (!node || node.nodeType !== 3) {
-//				return false
-//			}
-//            const parentNode = node.parentNode
-//			parentNode.removeChild(node)
-//			if (parentNode instanceof HTMLTextAreaElement) {
-//				parentNode.value = ""
-//			}
-//			break
-//		}
-//		case Type.addTextElement: {
-//            const parentRoute = route.slice()
-//            const c: number = parentRoute.splice(parentRoute.length - 1, 1)[0]
-//			newNode = options.document.createTextNode(
-//					diff.getValue() as string
-//			)
-//			node = getFromRoute(tree, parentRoute)
-//			if (!node.childNodes) {
-//				return false
-//			}
-//			node.insertBefore(newNode, node.childNodes[c] || null)
-//			if (node.parentNode instanceof HTMLTextAreaElement) {
-//				node.parentNode.value = diff.getValue() as string
-//			}
-//			break
-//		}
 		default:
 			throw new RuntimeException("unknown action [" + action + "]");
 		}
