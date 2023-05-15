@@ -392,7 +392,10 @@ public class ComponentFeature implements Cloneable {
 			clone._feature = _feature.clone();
 			clone._children = _children.stream().map(ComponentFeature::clone).collect(
 					Collectors.toList());
-			clone._owner = (Component) _owner.clone();
+
+//			1. Avoid to clone ZK component recursively
+//			2. ZK component will be cloned when patching
+//			clone._owner = (Component) _owner.clone();
 			return clone;
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException(e);
