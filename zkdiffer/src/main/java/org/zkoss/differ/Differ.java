@@ -38,10 +38,41 @@ public class Differ {
 	}
 
 	/**
+	 * Diffs the differences of the whole tree between the source component and target component
+	 * with the {@link DiffOptions#DEFAULT} option.
+	 */
+	public static List<Instruction> diff(ComponentFeature source, ComponentFeature target) {
+		return diff(source, target, DiffOptions.DEFAULT);
+	}
+
+	/**
+	 * Diffs the differences of the whole tree between the source component and target component.
+	 */
+	public static List<Instruction> diff(ComponentFeature source, ComponentFeature target, DiffOptions options) {
+		return new DiffFinder(source, target, options).findOuter();
+	}
+
+	/**
 	 * Diffs the differences of the subtree between the source component and target component
 	 * with the {@link DiffOptions#DEFAULT} option. (Excluding both root components themselves)
 	 */
 	public static List<Instruction> diffInner(Component source, Component target) {
+		return diffInner(source, target, DiffOptions.DEFAULT);
+	}
+
+	/**
+	 * Diffs the differences of the subtree between the source component and target component.
+	 * (Excluding both root components themselves)
+	 */
+	public static List<Instruction> diffInner(ComponentFeature source, ComponentFeature target, DiffOptions options) {
+		return new DiffFinder(source, target, options).findInner();
+	}
+
+	/**
+	 * Diffs the differences of the subtree between the source component and target component
+	 * with the {@link DiffOptions#DEFAULT} option. (Excluding both root components themselves)
+	 */
+	public static List<Instruction> diffInner(ComponentFeature source, ComponentFeature target) {
 		return diffInner(source, target, DiffOptions.DEFAULT);
 	}
 

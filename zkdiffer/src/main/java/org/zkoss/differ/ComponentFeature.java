@@ -370,7 +370,11 @@ public class ComponentFeature implements Cloneable {
 		return buildNested(clone);
 	}
 
-	private static ComponentFeature buildNested(Component t1) {
+	/**
+	 * Internal use only.
+	 * @hidden
+	 */
+	public static ComponentFeature buildNested(Component t1) {
 		ComponentFeature root = new ComponentFeature(new Feature(), t1.getDefinition().getName(), t1);
 		List<Component> shadowChildren = new ArrayList<>(t1.getChildren());
 		try {

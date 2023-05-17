@@ -41,6 +41,12 @@ public interface DiffOptions {
 	DiffRange getSourceRange();
 
 	/**
+	 * Returns the target range to shrink the target component, if any.
+	 */
+	@Nullable
+	DiffRange getTargetRange();
+
+	/**
 	 * Returns whether not to diff the root component.
 	 * @return true to skip diffing the root component.
 	 */

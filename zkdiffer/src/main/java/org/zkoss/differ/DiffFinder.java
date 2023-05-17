@@ -41,11 +41,16 @@ import org.zkoss.zk.ui.Component;
 	/*package*/ DiffFinder(Component source, Component target, DiffOptions options) {
 		_source = ComponentFeature.build(source, options);
 		_target = ComponentFeature.build(target,
-				new DiffOptions.Builder().from(options).setSourceRange(null)
+				new DiffOptions.Builder().from(options).setSourceRange(options.getTargetRange())
 						.build()); // reset diff range for target
 		_options = options;
 	}
 
+	/*package*/ DiffFinder(ComponentFeature source, ComponentFeature target, DiffOptions options) {
+		_source = source;
+		_target = target;
+		_options = options;
+	}
 	/*package*/ List<Instruction> findOuter() {
 		_subtreeInfosCache = new HashMap<>();
 		try {

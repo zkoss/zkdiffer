@@ -13,6 +13,7 @@ package org.zkoss.differ;
 
 import static org.zkoss.differ.Instruction.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.zkoss.lang.Classes;
+import org.zkoss.lang.Objects;
 import org.zkoss.lang.reflect.Fields;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.sys.ComponentCtrl;
@@ -35,11 +37,15 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 	}
 
 	private static void setProperty(Component component, String propName, Object propValue) {
+		if (propName.startsWith("$$")) return; // ignore event changed.
 		PropertyAccess propertyAccess = ((ComponentCtrl) component).getPropertyAccess(
 				propName);
 		if (propertyAccess != null) {
 			propertyAccess.setValue(component, propValue);
 		} else {
+			if (propName.startsWith("_")) {
+				throw new RuntimeException("No such method for [" + propName + "]");
+			}
 			// try reflection
 			try {
 				Fields.set(component, propName, propValue, true);
@@ -48,6 +54,25 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 			}
 		}
 	}
+
+	private static Object getProperty(Component component, String propName)
+			throws InvocationTargetException, NoSuchMethodException,
+			InstantiationException, IllegalAccessException {
+		if (propName.startsWith("$$")) return null;
+		PropertyAccess propertyAccess = ((ComponentCtrl) component).getPropertyAccess(
+				propName);
+		if (propertyAccess != null) {
+			return propertyAccess.getValue(component);
+		} else {
+			if (propName.startsWith("_")) {
+				throw new RuntimeException("No such method for [" + propName + "]");
+			}
+			// try reflection
+			return Fields.get(Classes.newInstance(component.getClass(), null),
+					propName);
+		}
+	}
+
 	private static boolean patchDiff(Component source, Instruction diff) {
 		Action action = diff.getAction();
 		List<Integer> route = diff.getRoute();
@@ -111,10 +136,9 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 				return false;
 			}
 			try {
+				String propName = diff.getName();
 				// reset with the default value, if possible
-				setProperty(node, diff.getName(),
-						Fields.get(Classes.newInstance(node.getClass(), null),
-								diff.getName()));
+				setProperty(node, propName, getProperty(node, propName));
 			} catch (Throwable t) {
 				// rollback with replace element
 				Component parent = node.getParent();
