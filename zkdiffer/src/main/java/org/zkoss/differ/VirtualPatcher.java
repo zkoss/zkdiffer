@@ -138,7 +138,7 @@ import java.util.stream.Collectors;
 			int from = diff.getFrom();
 			int groupLength = diff.getGroupLength();
 			assert node != null;
-			nodeArray = node.getChildren().subList(from, from + groupLength);
+			nodeArray = new ArrayList<>(node.getChildren().subList(from, from + groupLength));
 			Collections.reverse(nodeArray);
 			int to = diff.getTo();
 			for (ComponentFeature movedNode : nodeArray) {
