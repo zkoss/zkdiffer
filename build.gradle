@@ -4,13 +4,6 @@ plugins {
 	id 'idea'
 }
 
-idea {
-	module {
-		outputDir file("$buildDir/classes/main")
-		testOutputDir file("$buildDir/classes/test")
-	}
-}
-
 subprojects {
 	afterEvaluate {
 		java.sourceCompatibility = JavaVersion.VERSION_11
