@@ -11,7 +11,7 @@ Copyright (C) 2023 Potix Corporation. All Rights Reserved.
 */
 package org.zkoss.differ;
 
-import static org.zkoss.differ.Instruction.*;
+import static org.zkoss.differ.Instruction.Action;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
@@ -20,8 +20,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.zkoss.lang.Classes;
-import org.zkoss.lang.Objects;
 import org.zkoss.lang.reflect.Fields;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.sys.ComponentCtrl;
@@ -32,6 +34,8 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
  * @author jumperchen
  */
 /*package*/ class Patcher {
+	private static Logger _logger = LoggerFactory.getLogger(Patcher.class);
+
 	/*package*/ static boolean patch(Component source, List<Instruction> diffs) {
 		return diffs.stream().allMatch(diff -> patchDiff(source, diff));
 	}
@@ -44,12 +48,18 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 			propertyAccess.setValue(component, propValue);
 		} else {
 			if (propName.startsWith("_")) {
+				if (_logger.isDebugEnabled()) {
+					_logger.debug("No such method for [" + propName + "] on [" + component + "]");
+				}
 				throw new RuntimeException("No such method for [" + propName + "]");
 			}
 			// try reflection
 			try {
 				Fields.set(component, propName, propValue, true);
 			} catch (NoSuchMethodException e) {
+				if (_logger.isDebugEnabled()) {
+					_logger.debug("No such method for [" + propName + "] on [" + component + "]");
+				}
 				throw new RuntimeException(e);
 			}
 		}
@@ -65,6 +75,9 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 			return propertyAccess.getValue(component);
 		} else {
 			if (propName.startsWith("_")) {
+				if (_logger.isDebugEnabled()) {
+					_logger.debug("No such method for [" + propName + "] on [" + component + "]");
+				}
 				throw new RuntimeException("No such method for [" + propName + "]");
 			}
 			// try reflection
@@ -110,6 +123,9 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 			try {
 				setProperty(node, diff.getName(), diff.getValue());
 			} catch (Throwable t) {
+				if (_logger.isDebugEnabled()) {
+					_logger.debug("Cannot call setProperty", t);
+				}
 				// rollback with replace element
 				Component parent = node.getParent();
 				Component newChild = ((ComponentFeature) diff.getElement()).toComponent();
@@ -124,6 +140,9 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 			try {
 				setProperty(node, diff.getName(), diff.getNewValue());
 			} catch (Throwable t) {
+				if (_logger.isDebugEnabled()) {
+					_logger.debug("Cannot call setProperty", t);
+				}
 				// rollback with replace element
 				Component parent = node.getParent();
 				Component newChild = ((ComponentFeature) diff.getElement()).toComponent();
@@ -140,6 +159,9 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 				// reset with the default value, if possible
 				setProperty(node, propName, getProperty(node, propName));
 			} catch (Throwable t) {
+				if (_logger.isDebugEnabled()) {
+					_logger.debug("Cannot call setProperty", t);
+				}
 				// rollback with replace element
 				Component parent = node.getParent();
 				Component newChild = ((ComponentFeature) diff.getElement()).toComponent();
