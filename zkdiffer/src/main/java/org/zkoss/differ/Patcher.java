@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.zkoss.lang.Classes;
 import org.zkoss.lang.reflect.Fields;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.ext.DynamicPropertied;
 import org.zkoss.zk.ui.sys.ComponentCtrl;
 import org.zkoss.zk.ui.sys.PropertyAccess;
 
@@ -115,6 +116,21 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 				return false;
 			}
 			node.removeAttribute(diff.getName());
+			break;
+		case addDynamicProperty:
+			if (node instanceof DynamicPropertied) {
+				((DynamicPropertied) node).setDynamicProperty(diff.getName(), diff.getValue());
+			}
+			break;
+		case modifyDynamicProperty:
+			if (node instanceof DynamicPropertied) {
+				((DynamicPropertied) node).setDynamicProperty(diff.getName(), diff.getValue());
+			}
+			break;
+		case removeDynamicProperty:
+			if (node instanceof DynamicPropertied) {
+				((DynamicPropertied) node).getDynamicProperties().remove(diff.getName());
+			}
 			break;
 		case addProperty:
 			if (node == null) {

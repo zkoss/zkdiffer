@@ -91,6 +91,15 @@ import java.util.stream.Collectors;
 		case removeProperty:
 			node.removeProperty(diff.getName());
 			break;
+		case addDynamicProperty:
+			node.setDynamicProperty(diff.getName(), diff.getValue());
+			break;
+		case modifyDynamicProperty:
+			node.setDynamicProperty(diff.getName(), diff.getNewValue());
+			break;
+		case removeDynamicProperty:
+			node.removeDynamicProperty(diff.getName());
+			break;
 		case addWidgetOverride:
 			node.setWidgetOverride(diff.getName(), (String) diff.getValue());
 			break;

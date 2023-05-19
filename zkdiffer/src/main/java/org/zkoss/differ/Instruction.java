@@ -31,6 +31,7 @@ public interface Instruction {
 	 */
 	public enum Action {
 		addAttribute, modifyAttribute, removeAttribute,
+		addDynamicProperty, modifyDynamicProperty, removeDynamicProperty,
 		addProperty, modifyProperty, removeProperty,
 		addWidgetOverride, modifyWidgetOverride, removeWidgetOverride,
 		addClientAttribute, modifyClientAttribute, removeClientAttribute,

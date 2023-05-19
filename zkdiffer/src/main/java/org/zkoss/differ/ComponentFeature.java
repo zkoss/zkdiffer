@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
 import org.zkoss.lang.Objects;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.ShadowElement;
+import org.zkoss.zk.ui.ext.DynamicPropertied;
 import org.zkoss.zk.ui.sys.ComponentCtrl;
 import org.zkoss.zk.ui.sys.ContentRenderer;
 
@@ -41,6 +42,7 @@ public class ComponentFeature implements Cloneable {
 	private List<ComponentFeature> _children = new ArrayList<>();
 
 	private Map<String, Object> _attributes;
+	private Map<String, Object> _dynamicProperties;
 	/*package*/ boolean outerDone;
 	/*package*/ boolean innerDone;
 
@@ -49,6 +51,7 @@ public class ComponentFeature implements Cloneable {
 		_widgetName = widgetName;
 		_owner = owner;
 		_attributes = new HashMap<>(owner.getAttributes());
+		_dynamicProperties = owner instanceof DynamicPropertied ? ((DynamicPropertied) owner).getDynamicProperties() : new HashMap<>(0);
 	}
 
 	/**
@@ -88,14 +91,39 @@ public class ComponentFeature implements Cloneable {
 	}
 
 	/**
-	 * Returns all component attirbutes
+	 * Returns all component dynamic properties
+	 */
+	public Map<String, Object> getDynamicProperties() {
+		return _dynamicProperties;
+	}
+
+	/**
+	 * Sets a new dynamic property or update a dynamic property.
+	 * @param name the name of the dynamic property
+	 * @param value
+	 */
+	public void setDynamicProperty(String name, Object value) {
+		_dynamicProperties.put(name, value);
+	}
+
+	/**
+	 * Removes the dynamic property from the given name.
+	 * @param name
+	 * @return the origin value if any.
+	 */
+	public Object removeDynamicProperty(String name) {
+		return _dynamicProperties.remove(name);
+	}
+
+	/**
+	 * Returns all component attributes
 	 */
 	public Map<String, Object> getAttributes() {
 		return _attributes;
 	}
 
 	/**
-	 * Sets a new attribute or update a attribute.
+	 * Sets a new attribute or update an attribute.
 	 * @param name the name of the attribute
 	 * @param value
 	 */
@@ -331,7 +359,8 @@ public class ComponentFeature implements Cloneable {
 	}
 
 	/**
-	 * Builds a component feature tree from the given ZK comopnent tree.
+	 * Builds a component feature tree from the given ZK component tree.
+	 * <p>Note: the source component will be cloned as a snapshot inside this method.
 	 * @param source
 	 * @param options
 	 */
@@ -372,13 +401,15 @@ public class ComponentFeature implements Cloneable {
 
 	/**
 	 * Internal use only.
+	 * <p>Note: unlike {@link #build(Component, DiffOptions)}, this source component
+	 * won't be cloned inside this method, i.e. the ComponentFeature hold a live component.
 	 * @hidden
 	 */
-	public static ComponentFeature buildNested(Component t1) {
-		ComponentFeature root = new ComponentFeature(new Feature(), t1.getDefinition().getName(), t1);
-		List<Component> shadowChildren = new ArrayList<>(t1.getChildren());
+	public static ComponentFeature buildNested(Component source) {
+		ComponentFeature root = new ComponentFeature(new Feature(), source.getDefinition().getName(), source);
+		List<Component> shadowChildren = new ArrayList<>(source.getChildren());
 		try {
-			((ComponentCtrl) t1).renderPropertiesOnly(root._feature);
+			((ComponentCtrl) source).renderPropertiesOnly(root._feature);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

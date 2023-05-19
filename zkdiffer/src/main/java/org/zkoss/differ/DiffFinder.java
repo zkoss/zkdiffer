@@ -564,6 +564,12 @@ import org.zkoss.zk.ui.Component;
 				Instruction.Action.addAttribute,
 				Instruction.Action.removeAttribute,
 				Instruction.Action.modifyAttribute);
+
+		// check component dynamic properties.
+		diffMap(diffs, route, null, source.getDynamicProperties(), target.getDynamicProperties(),
+				Instruction.Action.addDynamicProperty,
+				Instruction.Action.removeDynamicProperty,
+				Instruction.Action.modifyDynamicProperty);
 		return diffs;
 	}
 
