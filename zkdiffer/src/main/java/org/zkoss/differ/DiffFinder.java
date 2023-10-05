@@ -124,12 +124,16 @@ import org.zkoss.zk.ui.Component;
 		}
 		return diffs.stream().map(instruction -> {
 			List<Integer> route = instruction.getRoute();
-			// ignore for root
+			// ignore for root (except relocate)
+			int start = diffRange.getStart();
 			if (!route.isEmpty()) {
 				Instruction.Builder newInstruction = new Instruction.Builder().from(instruction);
 				List<Integer> newRoute = new ArrayList<>(route);
-				newRoute.set(0, newRoute.get(0) + diffRange.getStart());
+				newRoute.set(0, newRoute.get(0) + start);
 				return newInstruction.setRoute(newRoute).build();
+			} else if (instruction.getAction().equals(Instruction.Action.relocateGroup)) {
+				Instruction.Builder newInstruction = new Instruction.Builder().from(instruction);
+				return newInstruction.setFrom(instruction.getFrom() + start).setTo(instruction.getTo() + start).build();
 			}
 			return instruction;
 		}).collect(Collectors.toList());

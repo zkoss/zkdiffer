@@ -224,7 +224,7 @@ import java.util.stream.Collectors;
 			route = new ArrayList<>(diff.getRoute());
 			int c = route.remove(route.size() - 1);
 			node = getFromVirtualRoute(source, route).node;
-			newNode = diff.getElement();
+			newNode = diff.getElement().clone();
 
 			if (c >= node.getChildren().size()) {
 				node.appendChild(newNode);

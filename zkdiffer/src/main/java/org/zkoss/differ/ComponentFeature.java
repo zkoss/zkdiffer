@@ -425,6 +425,8 @@ public class ComponentFeature implements Cloneable {
 			ComponentFeature clone = (ComponentFeature) super.clone();
 			clone._widgetName = _widgetName;
 			clone._feature = _feature.clone();
+			clone._attributes = new HashMap<>(_attributes);
+			clone._dynamicProperties = new HashMap<>(_dynamicProperties);
 			clone._children = _children.stream().map(ComponentFeature::clone).collect(
 					Collectors.toList());
 
