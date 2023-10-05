@@ -267,8 +267,8 @@ import org.zkoss.zk.ui.Component;
 		Pair<Object[], Object[]> gapInfo = getGapInformation(source, target,
 				subtreeInfos);
 
-		List<ComponentFeature> sourceChildren = source.getChildren();
-		List<ComponentFeature> targetChildren = target.getChildren();
+		List<ComponentFeature> sourceChildren = new ArrayList<>(source.getChildren());
+		List<ComponentFeature> targetChildren = new ArrayList<>(target.getChildren());
 		List<Object> gaps1 = new ArrayList<>(Arrays.asList(gapInfo.x));
 		List<Object> gaps2 = new ArrayList<>(Arrays.asList(gapInfo.y));
 		int shortest = Math.min(gaps1.size(), gaps2.size());
@@ -278,28 +278,31 @@ import org.zkoss.zk.ui.Component;
 					Objects.equals(gaps1.get(index2), Boolean.TRUE) || Objects.equals(gaps2.get(index2),
 							Boolean.TRUE))) {
 				// pass
-			} else if (Objects.equals(gaps1.get(index2), Boolean.TRUE)) {
+			} else if (Objects.equals(gaps1.get(index1), Boolean.TRUE)) {
 				ComponentFeature c1 = sourceChildren.get(index1);
 				diffs.add(Instruction.newBuilder(
 						Instruction.Action.removeElement).setRoute(
-						concat(route, index2)).setElement(c1.clone()).build());
-				gaps1.remove(index2);
+						concat(route, index1)).setElement(c1.clone()).build());
+				gaps1.remove(index1);
+				sourceChildren.remove(index1);
 				shortest = Math.min(gaps1.size(), gaps2.size());
+				index1 -= 1;
 				index2 -= 1;
 			} else if (Objects.equals(gaps2.get(index2), Boolean.TRUE)) {
 				ComponentFeature c2 = targetChildren.get(index2);
 				diffs.add(Instruction.newBuilder(
 						Instruction.Action.addElement).setRoute(
-						concat(route, index2)).setElement(c2.clone()).build());
-				gaps1.add(index2, Boolean.TRUE);
+						concat(route, index1)).setElement(c2.clone()).build());
+				gaps1.add(index1, Boolean.TRUE);
+				sourceChildren.add(index1, c2.clone());
 				shortest = Math.min(gaps1.size(), gaps2.size());
-				index1 -= 1;
-			} else if (!Objects.equals(gaps1.get(index2), gaps2.get(index2))) {
+//				index1 -= 1;
+			} else if (!Objects.equals(gaps1.get(index1), gaps2.get(index2))) {
 				if (diffs.size() > 0) {
 					return diffs;
 				}
 				// group relocation
-				SubtreeInfo group = subtreeInfos.get((int) gaps1.get(index2));
+				SubtreeInfo group = subtreeInfos.get((int) gaps1.get(index1));
 				int toGroup = Math.min(group.newIndex, (sourceChildren.size() - group.length));
 				if (toGroup != group.oldIndex) {
 					boolean destinationDifferent = false;
