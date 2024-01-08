@@ -37,6 +37,7 @@ dependencies {
 
     annotationProcessor "org.immutables:value:$immutablesVersion"
     compileOnly "org.immutables:value:$immutablesVersion"
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.1'
 
     // Use JUnit Jupiter for testing.
     testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
