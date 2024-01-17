@@ -225,19 +225,19 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 			if (node == null) {
 				return false;
 			}
-			node.setWidgetAttribute(diff.getName(), (String) diff.getValue());
+			node.setClientAttribute(diff.getName(), (String) diff.getValue());
 			break;
 		case modifyWidgetAttribute:
 			if (node == null) {
 				return false;
 			}
-			node.setWidgetAttribute(diff.getName(), (String) diff.getNewValue());
+			node.setClientAttribute(diff.getName(), (String) diff.getNewValue());
 			break;
 		case removeWidgetAttribute:
 			if (node == null) {
 				return false;
 			}
-			node.setWidgetAttribute(diff.getName(), null);
+			node.setClientAttribute(diff.getName(), null);
 			break;
 		case addClientAttribute:
 			if (node == null) {
