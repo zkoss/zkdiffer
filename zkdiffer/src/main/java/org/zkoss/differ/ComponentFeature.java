@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,10 @@ public class ComponentFeature implements Cloneable {
 		_widgetName = widgetName;
 		_owner = owner;
 		_attributes = new HashMap<>(owner.getAttributes());
-		_dynamicProperties = owner instanceof DynamicPropertied ? ((DynamicPropertied) owner).getDynamicProperties() : new HashMap<>(0);
+		_dynamicProperties = Optional.ofNullable(
+				owner instanceof DynamicPropertied
+						? ((DynamicPropertied) owner).getDynamicProperties() :
+						new HashMap<String, Object>(0)).orElse(new HashMap<>(0));
 	}
 
 	/**

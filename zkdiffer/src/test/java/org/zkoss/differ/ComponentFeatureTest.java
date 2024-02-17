@@ -91,7 +91,7 @@ public class ComponentFeatureTest extends ZKDifferTestBase {
 		Differ.merge(source, target);
 		assertEquals(redraw(() -> source), redraw(() -> target));
 		AbstractComponent childAtLevel = findChildAtLevel(source, 2);
-		assertEquals("mydiv", childAtLevel.getWidgetAttribute("sclass"));
+		assertEquals("mydiv", childAtLevel.getClientAttribute("sclass"));
 	}
 
 	@Test
@@ -141,7 +141,7 @@ public class ComponentFeatureTest extends ZKDifferTestBase {
 	private static void updateWidgetAttribute(AbstractComponent component,
 			int level, String property, String value) {
 		AbstractComponent current = findChildAtLevel(component, level);
-		current.setWidgetAttribute(property, value);
+		current.setClientAttribute(property, value);
 	}
 
 	private static void updateWidgetOverride(AbstractComponent component,

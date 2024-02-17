@@ -26,9 +26,13 @@ import org.slf4j.LoggerFactory;
 import org.zkoss.lang.Classes;
 import org.zkoss.lang.reflect.Fields;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.WebApps;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.ext.DynamicPropertied;
 import org.zkoss.zk.ui.sys.ComponentCtrl;
 import org.zkoss.zk.ui.sys.PropertyAccess;
+import org.zkoss.zk.ui.sys.UiEngine;
+import org.zkoss.zk.ui.sys.WebAppCtrl;
 
 /**
  * The patcher to apply the differences into a ZK component tree.
@@ -48,11 +52,16 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 		if (propertyAccess != null) {
 			propertyAccess.setValue(component, propValue);
 		} else {
-			if (propName.startsWith("_")) {
-				if (_logger.isDebugEnabled()) {
-					_logger.debug("No such method for [" + propName + "] on [" + component + "]");
+			if (propName.startsWith("_") || propName.startsWith("$")) {
+				UiEngine uiEngine = ((WebAppCtrl) WebApps.getCurrent()).getUiEngine();
+				if (uiEngine != null) {
+					uiEngine.addSmartUpdate(component, propName, propValue, true);
+				} else {
+					if (_logger.isDebugEnabled()) {
+						_logger.debug("No such method for [" + propName + "] on [" + component + "]");
+					}
 				}
-				throw new RuntimeException("No such method for [" + propName + "]");
+				return;
 			}
 			// try reflection
 			try {
@@ -80,6 +89,12 @@ import org.zkoss.zk.ui.sys.PropertyAccess;
 					_logger.debug("No such method for [" + propName + "] on [" + component + "]");
 				}
 				throw new RuntimeException("No such method for [" + propName + "]");
+			} else if (propName.startsWith("$")) {
+				final String eventName = propName.substring(1);
+				if (Events.isListened(component, eventName, false)) {
+					return Events.isListened(component, eventName, true);
+				}
+				return null;
 			}
 			// try reflection
 			return Fields.get(Classes.newInstance(component.getClass(), null),

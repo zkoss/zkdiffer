@@ -5,3 +5,16 @@ This library is inspired from [diffDom](https://github.com/fiduswriter/diffDOM) 
 ## License
 
 This project is licensed under the LGPL v. 3. For details see LICENSE.txt.
+
+
+## How to release FL
+```bash
+./gradlew clean build release -PFL=true
+```
+and then the released bundle file will be in `zkdiffer/build/dist` folder.
+
+## How to release official
+```bash
+./gradlew clean build release
+```
+and then the released bundle file will be in `zkdiffer/build/dist` folder.
